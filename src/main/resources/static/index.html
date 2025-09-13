@@ -1,0 +1,1248 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>评估系统管理平台</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
+    <style>
+        /* CSS Variables for simplified theming */
+        :root {
+            --primary-color: #3B82F6; /* A clean, modern blue */
+            --primary-color-light: #EFF6FF;
+            --background-color: #F9FAFB;
+            --sidebar-bg: #FFFFFF;
+            --card-bg: #FFFFFF;
+            --text-primary: #1F2937;
+            --text-secondary: #6B7280;
+            --border-color: #E5E7EB;
+            --shadow-color: rgba(99, 102, 241, 0.1);
+            --success-color: #10B981;
+            --danger-color: #EF4444;
+
+            --font-family: 'Inter', 'Microsoft YaHei', sans-serif;
+            --border-radius: 12px;
+            --transition-speed: 0.3s;
+        }
+
+        html.dark {
+            --primary-color: #60A5FA;
+            --primary-color-light: #2c3548;
+            --background-color: #111827;
+            --sidebar-bg: #1F2937;
+            --card-bg: #1F2937;
+            --text-primary: #F9FAFB;
+            --text-secondary: #9CA3AF;
+            --border-color: #374151;
+            --shadow-color: rgba(0, 0, 0, 0.2);
+        }
+
+        /* General Styles */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: var(--font-family);
+            background-color: var(--background-color);
+            color: var(--text-primary);
+            transition: background-color var(--transition-speed), color var(--transition-speed);
+            display: flex;
+            min-height: 100vh;
+        }
+
+        /* SVG Icons */
+        .icon {
+            width: 20px;
+            height: 20px;
+            stroke-width: 2;
+            stroke: currentColor;
+            fill: none;
+            stroke-linecap: round;
+            stroke-linejoin: round;
+        }
+
+        /* Sidebar Navigation */
+        .sidebar {
+            width: 260px;
+            background-color: var(--sidebar-bg);
+            padding: 24px;
+            display: flex;
+            flex-direction: column;
+            border-right: 1px solid var(--border-color);
+            transition: all var(--transition-speed) ease;
+        }
+
+        .sidebar-header {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 40px;
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--text-primary);
+        }
+
+        .sidebar-header .icon {
+            width: 32px;
+            height: 32px;
+            color: var(--primary-color);
+        }
+
+        .nav-menu {
+            list-style: none;
+            flex-grow: 1;
+        }
+
+        .nav-item a {
+            display: flex;
+            align-items: center;
+            padding: 14px 16px;
+            margin-bottom: 8px;
+            border-radius: var(--border-radius);
+            text-decoration: none;
+            color: var(--text-secondary);
+            font-weight: 500;
+            transition: all var(--transition-speed) ease;
+        }
+
+        .nav-item a .icon {
+            margin-right: 16px;
+        }
+
+        .nav-item a:hover {
+            background-color: var(--primary-color-light);
+            color: var(--primary-color);
+        }
+
+        .nav-item a.active {
+            background-color: var(--primary-color);
+            color: white;
+            box-shadow: 0 4px 15px rgba(59, 130, 246, 0.3);
+        }
+
+        .theme-switcher {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 12px;
+            background-color: var(--background-color);
+            border-radius: var(--border-radius);
+            cursor: pointer;
+        }
+
+        /* Main Content */
+        .main-content {
+            flex-grow: 1;
+            padding: 32px;
+            overflow-y: auto;
+        }
+
+        .page {
+            display: none;
+            animation: fadeIn 0.5s ease-out;
+        }
+
+        .page.active {
+            display: block;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .page-header {
+            font-size: 2rem;
+            font-weight: 700;
+            margin-bottom: 24px;
+        }
+
+        /* Cards and Grids */
+        .card {
+            background-color: var(--card-bg);
+            border-radius: var(--border-radius);
+            padding: 24px;
+            box-shadow: 0 4px 12px var(--shadow-color);
+            border: 1px solid var(--border-color);
+            transition: all var(--transition-speed) ease;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 24px;
+            margin-bottom: 32px;
+        }
+
+        .stat-card {
+            padding: 20px;
+        }
+
+        .stat-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 8px 20px var(--shadow-color);
+        }
+
+        .stat-value {
+            font-size: 2.25rem;
+            font-weight: 700;
+            color: var(--primary-color);
+            margin-bottom: 8px;
+        }
+
+        .stat-label {
+            color: var(--text-secondary);
+            font-weight: 500;
+        }
+
+        /* Form Styles */
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+
+        .form-group input, .form-group select {
+            width: 100%;
+            padding: 12px 16px;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            font-size: 16px;
+            transition: all var(--transition-speed) ease;
+            background-color: var(--background-color);
+            color: var(--text-primary);
+        }
+
+        .form-group input:focus, .form-group select:focus {
+            outline: none;
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 3px var(--primary-color-light);
+        }
+
+        .form-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 24px;
+        }
+
+        /* Button Styles */
+        .btn {
+            background-color: var(--primary-color);
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: 600;
+            transition: all var(--transition-speed) ease;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            position: relative;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(59, 130, 246, 0.4);
+        }
+
+        .btn:disabled {
+            opacity: 0.7;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+
+        .btn .btn-text {
+            transition: opacity 0.2s ease;
+        }
+
+        .btn.loading .btn-text {
+            opacity: 0;
+        }
+
+        .btn .spinner {
+            position: absolute;
+            display: none;
+            width: 20px;
+            height: 20px;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            border-radius: 50%;
+            border-top-color: #fff;
+            animation: spin 1s ease-in-out infinite;
+        }
+        
+        .btn.loading .spinner {
+            display: block;
+        }
+
+        .btn-secondary { background-color: #718096; }
+        .btn-success { background-color: var(--success-color); }
+        .btn-danger { background-color: var(--danger-color); }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        /* Table Styles */
+        .table-container {
+            overflow-x: auto;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            background: var(--card-bg);
+        }
+
+        th, td {
+            padding: 16px;
+            text-align: left;
+            border-bottom: 1px solid var(--border-color);
+            white-space: nowrap;
+        }
+
+        th {
+            background-color: var(--background-color);
+            font-weight: 600;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            font-size: 12px;
+            letter-spacing: 0.5px;
+        }
+
+        tr:hover {
+            background-color: var(--background-color);
+        }
+
+        /* --- MODIFIED: File Input --- */
+        .file-drop-area {
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 40px 20px;
+            border: 2px dashed var(--border-color);
+            border-radius: var(--border-radius);
+            background-color: var(--background-color);
+            color: var(--text-secondary);
+            cursor: pointer;
+            transition: all var(--transition-speed) ease;
+        }
+        
+        .file-drop-area.drag-over {
+            border-color: var(--primary-color);
+            background-color: var(--primary-color-light);
+        }
+        
+        .file-drop-area:hover {
+            border-color: var(--primary-color);
+        }
+
+        .file-drop-area .icon {
+            width: 48px;
+            height: 48px;
+            color: var(--primary-color);
+            margin-bottom: 16px;
+        }
+
+        .file-drop-area .file-msg {
+            font-weight: 500;
+            color: var(--text-primary);
+        }
+        
+        .file-drop-area .file-msg-secondary {
+            font-size: 0.9rem;
+        }
+        
+        #fileName {
+            margin-top: 16px;
+            font-weight: 600;
+            color: var(--primary-color);
+        }
+
+        .file-input {
+            position: absolute;
+            left: 0;
+            top: 0;
+            height: 100%;
+            width: 100%;
+            cursor: pointer;
+            opacity: 0;
+        }
+        /* --- END MODIFICATION --- */
+
+
+        /* Empty State */
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: var(--text-secondary);
+        }
+
+        .empty-state .icon {
+            width: 60px;
+            height: 60px;
+            margin: 0 auto 20px;
+            opacity: 0.5;
+        }
+        .empty-state p { font-size: 1.1rem; }
+
+        /* Toast Notifications */
+        .toast-container {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 1000;
+        }
+
+        .toast {
+            background: var(--card-bg);
+            color: var(--text-primary);
+            padding: 16px 20px;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px var(--shadow-color);
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 10px;
+            border-left: 4px solid;
+            animation: slideIn 0.3s ease-out;
+            opacity: 0.95;
+        }
+        
+        .toast.success { border-color: var(--success-color); }
+        .toast.error { border-color: var(--danger-color); }
+        .toast.info { border-color: var(--secondary-color); }
+
+        @keyframes slideIn {
+            from { transform: translateX(100%); opacity: 0; }
+            to { transform: translateX(0); opacity: 0.95; }
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            body { flex-direction: column; }
+            .sidebar { width: 100%; height: auto; flex-direction: row; justify-content: space-between; align-items: center; padding: 16px; }
+            .sidebar-header { margin-bottom: 0; font-size: 1.2rem; }
+            .sidebar-header .icon { width: 24px; height: 24px; }
+            .nav-menu { display: none; } /* Hide for simplicity, could be a dropdown */
+            .main-content { padding: 16px; }
+            .form-row { grid-template-columns: 1fr; }
+        }
+
+    </style>
+</head>
+<body>
+
+    <!-- Sidebar -->
+    <nav class="sidebar">
+        <div>
+            <div class="sidebar-header">
+                <svg class="icon" viewBox="0 0 24 24"><path d="M4 18h16M4 12h16M4 6h16"></path></svg>
+                <span>评估系统</span>
+            </div>
+            <ul class="nav-menu">
+                <li class="nav-item">
+                    <a href="#dashboard" class="nav-link active">
+                        <svg class="icon" viewBox="0 0 24 24"><path d="M3 13h8V3H3v10zm0 8h8v-6H3v6zm10 0h8V11h-8v10zm0-18v6h8V3h-8z"></path></svg>
+                        <span>数据统计</span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="#add" class="nav-link">
+                        <svg class="icon" viewBox="0 0 24 24"><path d="M12 5v14m-7-7h14"></path></svg>
+                        <span>添加评估</span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="#import" class="nav-link">
+                         <svg class="icon" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4m14-7-5-5-5 5m5-5v12"></path></svg>
+                        <span>批量导入</span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="#list" class="nav-link">
+                        <svg class="icon" viewBox="0 0 24 24"><path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01"></path></svg>
+                        <span>评估列表</span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="#report" class="nav-link">
+                         <svg class="icon" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>
+                        <span>报告导出</span>
+                    </a>
+                </li>
+            </ul>
+        </div>
+        <div id="themeSwitcher" class="theme-switcher">
+            <span>暗黑模式</span>
+            <svg class="icon" id="themeIcon" viewBox="0 0 24 24"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path></svg>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <main class="main-content">
+
+        <!-- Page: Dashboard -->
+        <section id="dashboard" class="page active">
+            <h1 class="page-header">数据统计</h1>
+            <div class="stats-grid" id="statsGrid">
+                <!-- Stat cards will be dynamically generated -->
+            </div>
+            <div class="card">
+                <h3 style="margin-bottom: 20px;">趋势分析</h3>
+                <div style="height: 300px;">
+                    <canvas id="trendChart"></canvas>
+                </div>
+            </div>
+        </section>
+
+        <!-- Page: Add Assessment -->
+        <section id="add" class="page">
+            <h1 class="page-header">添加评估</h1>
+            <div class="card">
+                <form id="assessmentForm">
+                    <div class="form-group">
+                        <label for="studentName">学生姓名 *</label>
+                        <input type="text" id="studentName" name="studentName" required>
+                    </div>
+                    
+                    <!-- 修改时间选择器类型为 date -->
+                    <div class="form-group">
+                        <label for="assessmentDate">评估日期 *</label>
+                        <input type="date" 
+                               id="assessmentDate" 
+                               name="assessmentDate" 
+                               required
+                               min="1900-01-01"
+                               max="9999-12-31">
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="disciplineScore">纪律遵守度 (1-5分) *</label>
+                            <select id="disciplineScore" name="disciplineScore" required>
+                                <option value="">请选择</option>
+                                <option value="1">1分 - 违规</option>
+                                <option value="2">2分 - 较差</option>
+                                <option value="3">3分 - 一般</option>
+                                <option value="4">4分 - 良好</option>
+                                <option value="5">5分 - 模范</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="skillRate">技能达标率 (0-100%) *</label>
+                            <input type="number" id="skillRate" name="skillRate" min="0" max="100" step="0.1" required>
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="tasksCompleted">已完成任务数 *</label>
+                            <input type="number" id="tasksCompleted" name="tasksCompleted" min="0" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="totalTasks">总任务数 *</label>
+                            <input type="number" id="totalTasks" name="totalTasks" min="1" required>
+                        </div>
+                    </div>
+                    <div>
+                        <button type="submit" class="btn" id="saveBtn">
+                            <span class="btn-text">保存评估</span>
+                            <div class="spinner"></div>
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </section>
+
+        <!-- Page: Bulk Import -->
+        <section id="import" class="page">
+            <h1 class="page-header">批量导入</h1>
+            <div class="card">
+                <div style="margin-bottom: 20px; padding: 15px; background: var(--background-color); border-radius: 8px; color: var(--text-secondary);">
+                    <p>请使用标准Excel模板进行导入。模板格式如下：</p>
+                    <ul style="margin-top: 10px; margin-left: 20px;">
+                        <li>第1列: 学生姓名</li>
+                        <li>第2列: 评估日期 (格式: yyyy-MM-dd)</li>
+                        <li>第3列: 纪律遵守度 (1-5分)</li>
+                        <li>第4列: 技能达标率 (0-100%)</li>
+                        <li>第5列: 已完成任务数</li>
+                        <li>第6列: 总任务数</li>
+                    </ul>
+                </div>
+                
+                <div id="fileDropArea" class="file-drop-area">
+                    <input type="file" id="fileInput" class="file-input" accept=".xlsx,.xls">
+                    <svg class="icon" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4m14-7-5-5-5 5m5-5v12"></path></svg>
+                    <span class="file-msg">点击选择 或 拖拽Excel文件到此处</span>
+                    <span class="file-msg-secondary">仅支持 .xlsx, .xls格式</span>
+                    <div id="fileName"></div>
+                </div>
+                
+                <button id="uploadBtn" class="btn" style="margin-top: 20px; display: none;">
+                    <span class="btn-text">开始导入</span>
+                    <div class="spinner"></div>
+                </button>
+            </div>
+        </section>
+
+        <!-- Page: Assessment List -->
+        <section id="list" class="page">
+            <h1 class="page-header">评估列表</h1>
+            <div class="card">
+                <div style="margin-bottom: 20px; display: flex; justify-content: space-between; align-items: center;">
+                    <input type="text" id="searchInput" placeholder="搜索学生姓名..." style="padding: 10px; border: 1px solid var(--border-color); border-radius: 8px; background-color: var(--background-color);">
+                    <div>
+                        <button class="btn btn-danger" id="deleteSelectedBtn" style="display: none; margin-left: 10px;">
+                            <span class="btn-text">删除选中项</span>
+                            <div class="spinner"></div>
+                        </button>
+                        <span id="selectedCount" style="color: var(--text-secondary); margin-left: 10px;"></span>
+                    </div>
+                </div>
+                <div class="table-container">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th style="width: 50px;">
+                                    <input type="checkbox" id="selectAllCheckbox" style="transform: scale(1.2);">
+                                </th>
+                                <th>学生姓名</th>
+                                <th>评估日期</th>
+                                <th>纪律遵守度</th>
+                                <th>技能达标率</th>
+                                <th>任务完成率</th>
+                                <th>操作</th>
+                            </tr>
+                        </thead>
+                        <tbody id="assessmentTableBody">
+                            <!-- Data will be dynamically loaded -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+
+        <!-- Page: Report Export -->
+        <section id="report" class="page">
+            <h1 class="page-header">报告导出</h1>
+            <div class="card">
+                 <p style="margin-bottom: 20px; color: var(--text-secondary);">生成包含所有评估数据和统计分析的PDF报告。</p>
+                 <button class="btn" id="generateReportBtn">
+                    <span class="btn-text">生成PDF报告</span>
+                    <div class="spinner"></div>
+                </button>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- Toast Container -->
+    <div id="toastContainer" class="toast-container"></div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+
+            // --- Globals & Config ---
+            const API_BASE = 'http://localhost:8080/api/assessments';
+            let trendChart = null;
+            let selectedFile = null;
+
+            // --- DOM Element Cache ---
+            const dom = {
+                navLinks: document.querySelectorAll('.nav-link'),
+                pages: document.querySelectorAll('.page'),
+                themeSwitcher: document.getElementById('themeSwitcher'),
+                themeIcon: document.getElementById('themeIcon'),
+                statsGrid: document.getElementById('statsGrid'),
+                chartCanvas: document.getElementById('trendChart'),
+                assessmentForm: document.getElementById('assessmentForm'),
+                saveBtn: document.getElementById('saveBtn'),
+                fileInput: document.getElementById('fileInput'),
+                fileDropArea: document.getElementById('fileDropArea'),
+                fileName: document.getElementById('fileName'),
+                uploadBtn: document.getElementById('uploadBtn'),
+                assessmentTableBody: document.getElementById('assessmentTableBody'),
+                searchInput: document.getElementById('searchInput'),
+                generateReportBtn: document.getElementById('generateReportBtn'),
+                toastContainer: document.getElementById('toastContainer'),
+                selectAllCheckbox: document.getElementById('selectAllCheckbox'),
+                deleteSelectedBtn: document.getElementById('deleteSelectedBtn'),
+                selectedCount: document.getElementById('selectedCount')
+            };
+
+            // --- API Service ---
+            const api = {
+                async get(endpoint) {
+                    const response = await fetch(`${API_BASE}${endpoint}`);
+                    if (!response.ok) throw new Error('Network response was not ok');
+                    return response.json();
+                },
+                async post(endpoint, body) {
+                    const response = await fetch(`${API_BASE}${endpoint}`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(body)
+                    });
+                    if (!response.ok) {
+                        let errorMessage = `HTTP ${response.status}: ${response.statusText}`;
+                        try {
+                            const errorData = await response.json();
+                            if (errorData.message) {
+                                errorMessage = errorData.message;
+                            }
+                        } catch (e) {
+                            // 如果无法解析错误响应，使用默认错误消息
+                        }
+                        throw new Error(errorMessage);
+                    }
+                    return response.json();
+                },
+                 async postForm(endpoint, formData) {
+                    const response = await fetch(`${API_BASE}${endpoint}`, {
+                        method: 'POST',
+                        body: formData
+                    });
+                    if (!response.ok) throw new Error('File upload failed');
+                    return response.json();
+                },
+                async delete(endpoint) {
+                    const response = await fetch(`${API_BASE}${endpoint}`, {
+                        method: 'DELETE'
+                    });
+                    if (!response.ok) throw new Error('Delete request failed');
+                },
+                async getBlob(endpoint) {
+                    const response = await fetch(`${API_BASE}${endpoint}`);
+                     if (!response.ok) throw new Error('File download failed');
+                    return response.blob();
+                }
+            };
+
+            // --- UI Functions ---
+            const ui = {
+                showPage(pageId) {
+                    dom.pages.forEach(page => page.classList.toggle('active', page.id === pageId));
+                    dom.navLinks.forEach(link => link.classList.toggle('active', link.hash === `#${pageId}`));
+                },
+                setButtonLoading(button, isLoading) {
+                    button.disabled = isLoading;
+                    button.classList.toggle('loading', isLoading);
+                },
+                showToast(type, message) {
+                    const toast = document.createElement('div');
+                    toast.className = `toast ${type}`;
+                    toast.innerHTML = `<span>${message}</span>`;
+                    dom.toastContainer.appendChild(toast);
+                    setTimeout(() => toast.remove(), 4000);
+                },
+                renderEmptyState(container, message, icon) {
+                    const content = `
+                        <div class="empty-state">
+                            ${icon}
+                            <p>${message}</p>
+                        </div>
+                    `;
+                    if (container) {
+                        container.innerHTML = content;
+                    }
+                    return content;
+                }
+            };
+
+            // --- Application Logic ---
+
+            function setupEventListeners() {
+                // Navigation
+                dom.navLinks.forEach(link => {
+                    link.addEventListener('click', (e) => {
+                        e.preventDefault();
+                        const pageId = e.currentTarget.hash.substring(1);
+                        ui.showPage(pageId);
+                        if (pageId === 'dashboard') loadDashboardData();
+                        if (pageId === 'list') loadAssessmentListData();
+                    });
+                });
+
+                // Theme Switcher
+                dom.themeSwitcher.addEventListener('click', toggleTheme);
+                
+                // Forms and Buttons
+                dom.assessmentForm.addEventListener('submit', handleAddAssessment);
+                dom.uploadBtn.addEventListener('click', handleFileUpload);
+                dom.generateReportBtn.addEventListener('click', handleReportGeneration);
+                dom.searchInput.addEventListener('keyup', filterTable);
+                dom.selectAllCheckbox.addEventListener('change', handleSelectAll);
+                dom.deleteSelectedBtn.addEventListener('click', handleDeleteSelected);
+
+                // File Input and Drag/Drop Listeners
+                dom.fileInput.addEventListener('change', (e) => processFiles(e.target.files));
+                
+                ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+                    dom.fileDropArea.addEventListener(eventName, preventDefaults, false);
+                });
+                
+                ['dragenter', 'dragover'].forEach(eventName => {
+                    dom.fileDropArea.addEventListener(eventName, () => dom.fileDropArea.classList.add('drag-over'), false);
+                });
+
+                ['dragleave', 'drop'].forEach(eventName => {
+                    dom.fileDropArea.addEventListener(eventName, () => dom.fileDropArea.classList.remove('drag-over'), false);
+                });
+
+                dom.fileDropArea.addEventListener('drop', (e) => processFiles(e.dataTransfer.files), false);
+            }
+            
+            function preventDefaults(e) {
+                e.preventDefault();
+                e.stopPropagation();
+            }
+            
+            function toggleTheme() {
+                const html = document.documentElement;
+                html.classList.toggle('dark');
+                const isDark = html.classList.contains('dark');
+                localStorage.setItem('theme', isDark ? 'dark' : 'light');
+                dom.themeIcon.innerHTML = isDark
+                    ? `<path d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M12 17a5 5 0 1 0 0-10 5 5 0 0 0 0 10z"></path>`
+                    : `<path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>`;
+            }
+            
+            function initializeTheme() {
+                if (localStorage.getItem('theme') === 'dark' || 
+                   (window.matchMedia('(prefers-color-scheme: dark)').matches && !localStorage.getItem('theme'))) {
+                    document.documentElement.classList.add('dark');
+                }
+                toggleTheme(); 
+                toggleTheme(); 
+            }
+
+            // Dashboard
+            async function loadDashboardData() {
+                try {
+                    const stats = await api.get('/statistics');
+                    renderStats(stats);
+                    renderChart(stats);
+                } catch (error) {
+                    console.error('Failed to load dashboard data:', error);
+                    ui.renderEmptyState(dom.statsGrid, '加载统计数据失败', '<svg class="icon" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>');
+                }
+            }
+
+            function renderStats(stats) {
+                if (!stats || stats.totalAssessments === 0) {
+                     ui.renderEmptyState(dom.statsGrid, '暂无统计数据', '<svg class="icon" viewBox="0 0 24 24"><path d="M3 13h8V3H3v10zm0 8h8v-6H3v6zm10 0h8V11h-8v10zm0-18v6h8V3h-8z"></path></svg>');
+                     return;
+                }
+                 dom.statsGrid.innerHTML = `
+                    <div class="card stat-card">
+                        <div class="stat-value">${stats.averageDisciplineScore?.toFixed(2) ?? 'N/A'}</div>
+                        <div class="stat-label">平均纪律遵守度</div>
+                    </div>
+                    <div class="card stat-card">
+                        <div class="stat-value">${stats.averageSkillCompletionRate?.toFixed(1) ?? 'N/A'}%</div>
+                        <div class="stat-label">平均技能达标率</div>
+                    </div>
+                    <div class="card stat-card">
+                        <div class="stat-value">${stats.averageTaskCompletionRate?.toFixed(1) ?? 'N/A'}%</div>
+                        <div class="stat-label">平均任务完成率</div>
+                    </div>
+                    <div class="card stat-card">
+                        <div class="stat-value">${stats.totalAssessments}</div>
+                        <div class="stat-label">评估记录总数</div>
+                    </div>
+                `;
+            }
+
+            function renderChart(stats) {
+                if (trendChart) trendChart.destroy();
+                const ctx = dom.chartCanvas.getContext('2d');
+                
+                const labels = stats.disciplineTrend?.map(item => item.date) || [];
+                const datasets = [
+                    { label: '纪律遵守度', data: stats.disciplineTrend?.map(item => item.value), borderColor: getComputedStyle(document.documentElement).getPropertyValue('--primary-color'), tension: 0.4 },
+                    { label: '技能达标率', data: stats.skillTrend?.map(item => item.value), borderColor: getComputedStyle(document.documentElement).getPropertyValue('--success-color'), tension: 0.4 },
+                    { label: '任务完成率', data: stats.taskTrend?.map(item => item.value), borderColor: '#F59E0B', tension: 0.4 } // Added a third color for variety
+                ];
+                
+                trendChart = new Chart(ctx, {
+                    type: 'line',
+                    data: { labels, datasets },
+                    options: { responsive: true, maintainAspectRatio: false, scales: { y: { beginAtZero: true, max: 100 } } }
+                });
+            }
+
+            // Add/Edit
+            async function handleAddAssessment(e) {
+                e.preventDefault();
+                
+                // 验证日期
+                const assessmentDate = document.getElementById('assessmentDate').value;
+                if (!assessmentDate) {
+                    ui.showToast('error', '请选择评估日期');
+                    return;
+                }
+                
+                const year = new Date(assessmentDate).getFullYear();
+                if (year < 1900 || year > 9999) {
+                    ui.showToast('error', '请输入有效的年份 (1900-9999)');
+                    return;
+                }
+                
+                ui.setButtonLoading(dom.saveBtn, true);
+                const formData = new FormData(e.target);
+                const assessment = Object.fromEntries(formData.entries());
+                
+                console.log('Raw form data:', assessment);
+                console.log('Assessment date from form:', assessment.assessmentDate);
+                
+                // 转换数据类型以匹配后端期望的格式
+                const assessmentData = {
+                    studentName: assessment.studentName?.trim() || '',
+                    assessmentDate: assessment.assessmentDate || '',
+                    disciplineScore: parseInt(assessment.disciplineScore) || 0,
+                    skillCompletionRate: parseFloat(assessment.skillRate) || 0.0,
+                    tasksCompleted: parseInt(assessment.tasksCompleted) || 0,
+                    totalTasks: parseInt(assessment.totalTasks) || 0
+                };
+                
+                // 清理数据，确保没有undefined或null值
+                Object.keys(assessmentData).forEach(key => {
+                    if (assessmentData[key] === undefined || assessmentData[key] === null) {
+                        if (key === 'studentName' || key === 'assessmentDate') {
+                            assessmentData[key] = '';
+                        } else {
+                            assessmentData[key] = 0;
+                        }
+                    }
+                });
+                
+                // 数据验证
+                if (!assessmentData.studentName) {
+                    ui.showToast('error', '请输入学生姓名');
+                    ui.setButtonLoading(dom.saveBtn, false);
+                    return;
+                }
+                
+                if (!assessmentData.assessmentDate) {
+                    ui.showToast('error', '请选择评估日期');
+                    ui.setButtonLoading(dom.saveBtn, false);
+                    return;
+                }
+                
+                if (assessmentData.disciplineScore < 1 || assessmentData.disciplineScore > 5) {
+                    ui.showToast('error', '纪律遵守度必须在1-5分之间');
+                    ui.setButtonLoading(dom.saveBtn, false);
+                    return;
+                }
+                
+                if (assessmentData.skillCompletionRate < 0 || assessmentData.skillCompletionRate > 100) {
+                    ui.showToast('error', '技能达标率必须在0-100%之间');
+                    ui.setButtonLoading(dom.saveBtn, false);
+                    return;
+                }
+                
+                if (assessmentData.tasksCompleted < 0 || assessmentData.totalTasks <= 0 || 
+                    assessmentData.tasksCompleted > assessmentData.totalTasks) {
+                    ui.showToast('error', '任务完成数据无效');
+                    ui.setButtonLoading(dom.saveBtn, false);
+                    return;
+                }
+                
+                console.log('Processed assessment data:', assessmentData);
+                
+                try {
+                    console.log('Sending assessment data:', assessmentData);
+                    console.log('JSON string:', JSON.stringify(assessmentData));
+                    
+                    // 直接使用fetch进行测试
+                    const response = await fetch(`${API_BASE}`, {
+                        method: 'POST',
+                        headers: { 
+                            'Content-Type': 'application/json',
+                            'Accept': 'application/json'
+                        },
+                        body: JSON.stringify(assessmentData)
+                    });
+                    
+                    console.log('Response status:', response.status);
+                    console.log('Response headers:', response.headers);
+                    
+                    if (!response.ok) {
+                        const errorText = await response.text();
+                        console.error('Error response:', errorText);
+                        console.error('Response status:', response.status);
+                        console.error('Response statusText:', response.statusText);
+                        
+                        // 尝试解析错误响应
+                        let errorMessage = `HTTP ${response.status}: ${response.statusText}`;
+                        try {
+                            const errorData = JSON.parse(errorText);
+                            if (errorData.message) {
+                                errorMessage = errorData.message;
+                            }
+                        } catch (e) {
+                            console.error('Could not parse error response as JSON:', e);
+                        }
+                        
+                        throw new Error(errorMessage);
+                    }
+                    
+                    const result = await response.json();
+                    console.log('Response received:', result);
+                    
+                    if (result && result.success) {
+                        ui.showToast('success', '评估记录添加成功！');
+                        e.target.reset();
+                    } else {
+                        ui.showToast('error', result?.message || '保存失败');
+                    }
+                } catch (error) {
+                    console.error('Error adding assessment:', error);
+                    console.error('Error details:', error.message);
+                    console.error('Full error object:', error);
+                    
+                    // 尝试获取更详细的错误信息
+                    let errorMessage = '保存失败，请稍后重试';
+                    if (error.message) {
+                        errorMessage = '保存失败: ' + error.message;
+                    }
+                    
+                    ui.showToast('error', errorMessage);
+                } finally {
+                    ui.setButtonLoading(dom.saveBtn, false);
+                }
+            }
+            
+            // Import
+            function processFiles(files) {
+                if (files.length > 0) {
+                    selectedFile = files[0];
+                    // Validate file type if needed
+                    if (!selectedFile.name.match(/\.(xlsx|xls)$/)) {
+                        ui.showToast('error', '文件格式无效，请上传Excel文件');
+                        return;
+                    }
+                    dom.fileName.textContent = selectedFile.name;
+                    dom.uploadBtn.style.display = 'inline-flex';
+                }
+            }
+
+            async function handleFileUpload() {
+                if (!selectedFile) {
+                    ui.showToast('error', '请先选择文件');
+                    return;
+                }
+                ui.setButtonLoading(dom.uploadBtn, true);
+                const formData = new FormData();
+                formData.append('file', selectedFile);
+                
+                try {
+                    const result = await api.postForm('/import', formData);
+                    ui.showToast('success', result.message || '导入成功');
+                    dom.fileName.textContent = '';
+                    dom.uploadBtn.style.display = 'none';
+                    selectedFile = null;
+                    dom.fileInput.value = ''; // Reset file input
+                } catch (error) {
+                    ui.showToast('error', '导入失败，请检查文件格式');
+                } finally {
+                     ui.setButtonLoading(dom.uploadBtn, false);
+                }
+            }
+
+            // List
+            async function loadAssessmentListData() {
+                try {
+                    const assessments = await api.get('');
+                    renderAssessmentList(assessments);
+                } catch (error) {
+                    console.error('Failed to load assessment list:', error);
+                    const emptyStateHTML = ui.renderEmptyState(null, '加载数据失败', '<svg class="icon" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>');
+                    dom.assessmentTableBody.innerHTML = `<tr><td colspan="6">${emptyStateHTML}</td></tr>`;
+                }
+            }
+
+            function renderAssessmentList(assessments) {
+                if (assessments.length === 0) {
+                    const emptyStateHTML = ui.renderEmptyState(null, '暂无评估记录', '<svg class="icon" viewBox="0 0 24 24"><path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01"></path></svg>');
+                    dom.assessmentTableBody.innerHTML = `<tr><td colspan="7">${emptyStateHTML}</td></tr>`;
+                    return;
+                }
+
+                dom.assessmentTableBody.innerHTML = assessments.map(a => `
+                    <tr>
+                        <td>
+                            <input type="checkbox" class="row-checkbox" data-id="${a.id}" style="transform: scale(1.2);">
+                        </td>
+                        <td>${a.studentName}</td>
+                        <td>${new Date(a.assessmentDate).toLocaleDateString()}</td>
+                        <td>${a.disciplineScore}/5</td>
+                        <td>${a.skillCompletionRate.toFixed(1)}%</td>
+                        <td>${((a.tasksCompleted / a.totalTasks) * 100).toFixed(1)}%</td>
+                        <td>
+                            <button class="btn btn-danger" data-id="${a.id}" style="padding: 6px 12px; font-size: 14px;">删除</button>
+                        </td>
+                    </tr>
+                `).join('');
+                
+                // 添加删除按钮事件监听器
+                dom.assessmentTableBody.querySelectorAll('.btn-danger').forEach(btn => {
+                    btn.addEventListener('click', () => handleDeleteAssessment(btn.dataset.id));
+                });
+                
+                // 添加复选框事件监听器
+                dom.assessmentTableBody.querySelectorAll('.row-checkbox').forEach(checkbox => {
+                    checkbox.addEventListener('change', updateSelectionState);
+                });
+                
+                // 重置选择状态
+                resetSelectionState();
+            }
+            
+             async function handleDeleteAssessment(id) {
+                if (!confirm('确定要删除这条记录吗？')) return;
+                try {
+                    await api.delete(`/${id}`);
+                    ui.showToast('success', '删除成功');
+                    loadAssessmentListData(); // Refresh list
+                } catch (error) {
+                    ui.showToast('error', '删除失败');
+                }
+            }
+            
+            // 批量删除相关函数
+            function handleSelectAll() {
+                const checkboxes = dom.assessmentTableBody.querySelectorAll('.row-checkbox');
+                const isChecked = dom.selectAllCheckbox.checked;
+                
+                checkboxes.forEach(checkbox => {
+                    checkbox.checked = isChecked;
+                });
+                
+                updateSelectionState();
+            }
+            
+            function updateSelectionState() {
+                const checkboxes = dom.assessmentTableBody.querySelectorAll('.row-checkbox');
+                const checkedBoxes = dom.assessmentTableBody.querySelectorAll('.row-checkbox:checked');
+                const totalCount = checkboxes.length;
+                const selectedCount = checkedBoxes.length;
+                
+                // 更新全选复选框状态
+                if (selectedCount === 0) {
+                    dom.selectAllCheckbox.checked = false;
+                    dom.selectAllCheckbox.indeterminate = false;
+                } else if (selectedCount === totalCount) {
+                    dom.selectAllCheckbox.checked = true;
+                    dom.selectAllCheckbox.indeterminate = false;
+                } else {
+                    dom.selectAllCheckbox.checked = false;
+                    dom.selectAllCheckbox.indeterminate = true;
+                }
+                
+                // 更新选中计数和删除按钮显示
+                if (selectedCount > 0) {
+                    dom.selectedCount.textContent = `已选择 ${selectedCount} 项`;
+                    dom.deleteSelectedBtn.style.display = 'inline-flex';
+                } else {
+                    dom.selectedCount.textContent = '';
+                    dom.deleteSelectedBtn.style.display = 'none';
+                }
+            }
+            
+            function resetSelectionState() {
+                dom.selectAllCheckbox.checked = false;
+                dom.selectAllCheckbox.indeterminate = false;
+                dom.selectedCount.textContent = '';
+                dom.deleteSelectedBtn.style.display = 'none';
+            }
+            
+            async function handleDeleteSelected() {
+                const checkedBoxes = dom.assessmentTableBody.querySelectorAll('.row-checkbox:checked');
+                const selectedIds = Array.from(checkedBoxes).map(checkbox => checkbox.dataset.id);
+                
+                if (selectedIds.length === 0) {
+                    ui.showToast('error', '请先选择要删除的记录');
+                    return;
+                }
+                
+                const confirmMessage = `确定要删除选中的 ${selectedIds.length} 条记录吗？此操作不可撤销。`;
+                if (!confirm(confirmMessage)) return;
+                
+                ui.setButtonLoading(dom.deleteSelectedBtn, true);
+                
+                try {
+                    // 批量删除
+                    const deletePromises = selectedIds.map(id => api.delete(`/${id}`));
+                    await Promise.all(deletePromises);
+                    
+                    ui.showToast('success', `成功删除 ${selectedIds.length} 条记录`);
+                    loadAssessmentListData(); // 刷新列表
+                } catch (error) {
+                    console.error('批量删除失败:', error);
+                    ui.showToast('error', '批量删除失败，请重试');
+                } finally {
+                    ui.setButtonLoading(dom.deleteSelectedBtn, false);
+                }
+            }
+
+            function filterTable() {
+                const filter = dom.searchInput.value.toLowerCase();
+                const rows = dom.assessmentTableBody.getElementsByTagName('tr');
+                Array.from(rows).forEach(row => {
+                    const studentName = row.cells[1]?.textContent.toLowerCase(); // 学生姓名现在在第2列（索引1）
+                    if(studentName) {
+                        row.style.display = studentName.includes(filter) ? '' : 'none';
+                    }
+                });
+                
+                // 重新更新选择状态，因为过滤可能影响可见的复选框
+                updateSelectionState();
+            }
+
+            // Report
+            async function handleReportGeneration() {
+                ui.setButtonLoading(dom.generateReportBtn, true);
+                try {
+                    const blob = await api.getBlob('/report/pdf');
+                    const url = window.URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.href = url;
+                    a.download = `assessment_report_${Date.now()}.pdf`;
+                    document.body.appendChild(a);
+                    a.click();
+                    a.remove();
+                    window.URL.revokeObjectURL(url);
+                    ui.showToast('success', '报告已开始下载');
+                } catch (error) {
+                    ui.showToast('error', '报告生成失败');
+                } finally {
+                    ui.setButtonLoading(dom.generateReportBtn, false);
+                }
+            }
+
+            // --- Initializer ---
+            function init() {
+                initializeTheme();
+                setupEventListeners();
+                loadDashboardData();
+            }
+
+            init();
+        });
+    </script>
+</body>
+</html>

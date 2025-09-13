@@ -1,0 +1,88 @@
+# 服务器配置
+server:
+  port: 8080
+  shutdown: graceful
+
+# 数据库配置
+spring:
+  datasource:
+    # 修改为相对路径，数据库将保存在应用运行目录的 database 文件夹中
+    url: jdbc:h2:file:./database/assessment;AUTO_SERVER=TRUE
+    driver-class-name: org.h2.Driver
+    username: sa
+    password: password
+  
+  # JPA配置
+  jpa:
+    database-platform: org.hibernate.dialect.H2Dialect
+    hibernate:
+      ddl-auto: update
+    show-sql: false  # 生产环境建议设为 false
+    properties:
+      hibernate:
+        format_sql: true
+  
+  # H2控制台
+  h2:
+    console:
+      enabled: false  # 生产环境建议设为 false
+      path: /h2-console
+      
+  # 文件上传配置
+  servlet:
+    multipart:
+      max-file-size: 10MB
+      max-request-size: 10MB
+      
+  # 应用名称
+  application:
+    name: Assessment System
+    
+  # 生命周期配置
+  lifecycle:
+    timeout-per-shutdown-phase: 30s
+
+# 日志配置
+logging:
+  level:
+    com.assessment: INFO
+    root: WARN
+  pattern:
+    console: '%d{HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n'
+
+# 跨域配置
+cors:
+  allowed-origins: "*"
+  allowed-methods: "*"
+  allowed-headers: "*"
+
+---
+# 开发环境配置
+spring:
+  config:
+    activate:
+      on-profile: dev
+  h2:
+    console:
+      enabled: true
+  jpa:
+    show-sql: true
+logging:
+  level:
+    com.assessment: DEBUG
+
+---
+# 生产环境配置
+spring:
+  config:
+    activate:
+      on-profile: prod
+  h2:
+    console:
+      enabled: false
+  jpa:
+    show-sql: false
+logging:
+  level:
+    root: WARN
+    com.assessment: INFO
