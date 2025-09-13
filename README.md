@@ -4,6 +4,13 @@
 
 [中文版 README](README_CN.md) | English README
 
+## 📸 Screenshots
+
+<div align="center">
+  <img src="docs/light.webp" alt="Light Theme" width="45%">
+  <img src="docs/dark.webp" alt="Dark Theme" width="45%">
+</div>
+
 ## 🚀 Features
 
 - **📈 Data Statistics**: Real-time statistics for discipline compliance, skill completion rates, task completion rates, and other key metrics

@@ -4,6 +4,13 @@
 
 [English README](README.md) | 中文版 README
 
+## 📸 界面展示
+
+<div align="center">
+  <img src="docs/light.webp" alt="浅色主题" width="45%">
+  <img src="docs/dark.webp" alt="深色主题" width="45%">
+</div>
+
 ## 🚀 功能特性
 
 - **📈 数据统计**: 实时统计纪律遵守度、技能达标率、任务完成率等关键指标
